@@ -88,6 +88,7 @@ export default function App() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [message, setMessage] = useState(null);
   const previewRequestRef = useRef(0);
   const isBusy = loadingProducts || exporting;
@@ -134,6 +135,19 @@ export default function App() {
 
     return () => window.clearTimeout(timer);
   }, [message]);
+
+  useEffect(() => {
+    if (!isAdvancedOpen) return;
+
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsAdvancedOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isAdvancedOpen]);
 
   const payload = useMemo(() => ({ layout, fields, products }), [layout, fields, products]);
   const duplicateCount = useMemo(() => {
@@ -402,6 +416,9 @@ export default function App() {
               <button className="btn" onClick={handleSaveConfig} disabled={isBusy}>
                 Guardar configuracion
               </button>
+              <button className="btn btn-ghost" onClick={() => setIsAdvancedOpen(true)}>
+                Configuracion avanzada
+              </button>
             </div>
 
             <details className="panel collapsible-panel">
@@ -442,24 +459,6 @@ export default function App() {
               </div>
             </details>
 
-            <details className="panel collapsible-panel">
-              <summary>
-                Configuracion avanzada
-                <span className="summary-meta">opcional</span>
-              </summary>
-              <div className="collapsible-body advanced-body">
-                <p className="muted">Expandi esta seccion solo si necesitas cambiar plantilla, layout o posicion de campos.</p>
-                <TemplateSelector templates={templates} templateKey={templateKey} onChange={setTemplateKey} />
-                <ConfigForm
-                  layout={layout}
-                  fields={fields}
-                  setLayout={setLayout}
-                  setFields={setFields}
-                  onResetLayout={handleResetLayout}
-                  onResetFields={handleResetFields}
-                />
-              </div>
-            </details>
           </section>
         </div>
 
@@ -472,6 +471,30 @@ export default function App() {
           />
         </div>
       </section>
+
+      {isAdvancedOpen && (
+        <button className="drawer-backdrop" onClick={() => setIsAdvancedOpen(false)} aria-label="Cerrar configuracion avanzada" />
+      )}
+      <aside className={`side-drawer ${isAdvancedOpen ? "open" : ""}`} aria-hidden={!isAdvancedOpen}>
+        <div className="side-drawer-head">
+          <h3>Configuracion avanzada</h3>
+          <button className="btn" onClick={() => setIsAdvancedOpen(false)}>
+            Cerrar
+          </button>
+        </div>
+        <div className="side-drawer-body">
+          <p className="muted">Ajusta plantilla, layout o posicion de campos desde este panel lateral.</p>
+          <TemplateSelector templates={templates} templateKey={templateKey} onChange={setTemplateKey} />
+          <ConfigForm
+            layout={layout}
+            fields={fields}
+            setLayout={setLayout}
+            setFields={setFields}
+            onResetLayout={handleResetLayout}
+            onResetFields={handleResetFields}
+          />
+        </div>
+      </aside>
     </main>
   );
 }
